@@ -38,7 +38,6 @@ class MySQLHandler:
         self.user = user
         self.password = password
         self.database = database
-        self.connection = None
 
     def connect(self):
         """
@@ -98,7 +97,8 @@ class UniversitySpider:
     大学信息爬虫类，用于从指定网站爬取大学信息并保存到CSV文件或MySQL数据库。
     """
     def __init__(self):
-        pass
+        self.get_config()
+        self.mysql_handler = MySQLHandler(self.mysql_host, self.mysql_user, self.mysql_password, 'university_info')
 
     def get_config(self, config_file='config.json'):
         """
@@ -221,7 +221,7 @@ class UniversitySpider:
             writer.writerows(all_data)
         print(f"数据已保存至 {self.csv_file}")
 
-    def save_to_mysql(self,MySQLHandle,all_data):
+    def save_to_mysql(self,all_data):
         """
         将大学信息保存到MySQL数据库。
 
@@ -230,11 +230,10 @@ class UniversitySpider:
         - all_data: 包含所有大学信息的列表。
         """
         print("正在保存数据到MySQL数据库...")
-        mysql_handler = MySQLHandler(self.mysql_host,self.mysql_user,self.mysql_password,self.mysql_database)
-        mysql_handler.connect()
-        mysql_handler.create_table()
-        mysql_handler.insert_data(all_data)
-        mysql_handler.disconnect()
+        self.mysql_handler.connect()
+        self.mysql_handler.create_table()
+        self.mysql_handler.insert_data(all_data)
+        self.mysql_handler.disconnect()
         print(f"数据已保存至MySQL数据库 {self.mysql_database}")
 
     def run(self):
@@ -242,7 +241,6 @@ class UniversitySpider:
         爬虫的主运行方法，负责爬取数据并保存。
         """
         all_data = []
-        self.get_config()
         cookie_renewal_interval = self.cookie_renewal_interval
         page_count = 0
         cookie = self.get_cookies_from_url('https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-0.dhtml')

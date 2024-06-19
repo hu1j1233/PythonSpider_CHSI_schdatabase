@@ -11,7 +11,7 @@
     "mysql_user": "root",
     "mysql_password": "123456",
     "mysql_database": "university_data",
-    "end_of_page": 145,
+    "end_of_page": 144,
     "auto_get_end_of_page": false,
     "will_save_to_mysql": false,
     "will_save_to_csv": true

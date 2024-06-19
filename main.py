@@ -3,13 +3,13 @@ import requests
 from lxml import etree
 import csv
 import undetected_chromedriver as uc
-#from selenium.webdriver.chrome.options import Options
 from undetected_chromedriver.options import ChromeOptions #由于学信网反爬虫设置原因，需要使用反反爬虫的浏览器模拟库
 from undetected_chromedriver import By
 import time
 from requests.cookies import RequestsCookieJar
 import pymysql
 import json
+from datetime import datetime
 
 """
 学信网院校数据爬虫
@@ -106,8 +106,15 @@ class UniversitySpider:
         从配置文件中读取配置信息。
         """
         try:
+            # 读取文件内容
             with open(config_file, 'r') as file:
-                    config = json.load(file)
+                content = file.read()
+
+            lines = content.splitlines()
+            cleaned_lines = [line for line in lines if not line.strip().startswith('#')]
+            cleaned_content = '\n'.join(cleaned_lines)
+
+            config = json.loads(cleaned_content)
         except FileNotFoundError:
                 print(f"配置文件{config_file}未找到，请确保文件存在。")
                 return
@@ -151,6 +158,30 @@ class UniversitySpider:
                 cookie_jar.set(cookie['name'], cookie['value'])
 
             return cookie_jar, page_info
+        finally:
+            driver.quit()
+
+    def get_cookies_from_url(self,url):
+        """
+        使用浏览器获取网站cookies。
+        参数:
+        - url: 需要获取cookies的网站URL。
+        返回:
+        - cookie_jar: 包含获取到的cookies的RequestsCookieJar对象。
+        """
+        chrome_options = ChromeOptions()
+        driver = uc.Chrome(options=chrome_options)
+
+        try:
+            driver.get(url)
+            time.sleep(self.get_cookies_sleep_time)
+
+            selenium_cookies = driver.get_cookies()
+            cookie_jar = RequestsCookieJar()
+            for cookie in selenium_cookies:
+                cookie_jar.set(cookie['name'], cookie['value'])
+
+            return cookie_jar
         finally:
             driver.quit()
 
@@ -216,12 +247,18 @@ class UniversitySpider:
         参数:
         - all_data: 包含所有大学信息的列表。
         """
+        if '{date}' in self.csv_file:
+            current_date = datetime.now().strftime('%Y-%m-%d')
+            full_csv_file_name = self.csv_file.replace('{date}', current_date)
+        else:
+            full_csv_file_name = self.csv_file
+
         print("正在保存数据到CSV文件...")
-        with open(self.csv_file, 'w', newline='', encoding='utf-8') as csvfile:
+        with open(full_csv_file_name, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["院校名称","院校代码", "所在地区", "院校主管部门", "院校层次", "院校满意度"])
             writer.writerows(all_data)
-        print(f"数据已保存至 {self.csv_file}")
+        print(f"数据已保存至 {full_csv_file_name}")
 
     def save_to_mysql(self,all_data):
         """
@@ -250,12 +287,13 @@ class UniversitySpider:
         print(f'即将开始数据爬取，当前需要爬取的总页数是{self.end_of_page}页，保存至mysql的设置为{self.will_save_to_mysql}，保存至csv的设置为{self.will_save_to_csv}')
 
         for start in range(1, self.end_of_page + 1):
-            url = self.base_url.format(start=start)
+            url_count = ((start)-1)*20
+            url = self.base_url.format(start=url_count)
             html_content = self.fetch_url(url, cookie)
             if html_content:
                 page_data = self.parse_university_info(html_content)
                 all_data.extend(page_data)
-                print(f"成功抓取第{start}页数据")
+                print(f"当前进度:{start}/{self.end_of_page}页")
                 page_count += 1
 
                 if page_count % cookie_renewal_interval == 0:

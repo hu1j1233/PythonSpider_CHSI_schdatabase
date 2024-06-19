@@ -3,14 +3,25 @@
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
     },
-    "csv_file": "universities_data.csv",
+    #请求头信息
+    "csv_file": "universities_data_{date}.csv",
+    #文件保存地址
     "get_cookies_sleep_time": 3,
-    "get_web_sleep_time": 3,
-    "cookie_renewal_interval": 5,
+    #获取Cookies的等待时间
+    "get_web_sleep_time": 1,
+    #获取网页的等待时间
+    "cookie_renewal_interval": 50,
+    #重新获取Cookies的页数
     "mysql_host": "localhost",
+    #数据库地址
     "mysql_user": "root",
+    #数据库用户名
     "mysql_password": "123456",
+    #数据库密码
     "mysql_database": "university_data",
+    #数据库名称
     "will_save_to_mysql": false,
-    "will_save_to_csv": true
+    #是否保存到Mysql数据库
+    "will_save_to_csv": true,
+    #是否保存到csv文件
 }

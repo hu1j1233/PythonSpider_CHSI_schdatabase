@@ -10,12 +10,13 @@ from requests.cookies import RequestsCookieJar
 import pymysql
 import json
 from datetime import datetime
+import os
 
 """
-学信网院校数据爬虫
-作者：Huiji
-邮箱：huiji233@gmail.com
-运行环境:python3.9
+PythonSpider_CHSI_schdatabase
+Author:Hu1j1233(aka.Huiji233)
+Github:https://github.com/hu1j1233/PythonSpider_CHSI_schdatabase
+For GZASC_2021_NEC1_GroupWork
 """
 class MySQLHandler:
     """
@@ -106,15 +107,9 @@ class UniversitySpider:
         从配置文件中读取配置信息。
         """
         try:
-            # 读取文件内容
             with open(config_file, 'r') as file:
-                content = file.read()
 
-            lines = content.splitlines()
-            cleaned_lines = [line for line in lines if not line.strip().startswith('#')]
-            cleaned_content = '\n'.join(cleaned_lines)
-
-            config = json.loads(cleaned_content)
+                    config = json.load(file)
         except FileNotFoundError:
                 print(f"配置文件{config_file}未找到，请确保文件存在。")
                 return
@@ -247,11 +242,23 @@ class UniversitySpider:
         参数:
         - all_data: 包含所有大学信息的列表。
         """
-        if '{date}' in self.csv_file:
-            current_date = datetime.now().strftime('%Y-%m-%d')
+        now = datetime.now()
+        current_date = now.strftime('%Y-%m-%d')
+        current_time = now.strftime('%H-%M-%S')
+
+        if '{date}' in self.csv_file and '{time}' in self.csv_file:
+            full_csv_file_name = self.csv_file.replace('{date}', current_date).replace('{time}', current_time)
+        elif '{date}' in self.csv_file:
             full_csv_file_name = self.csv_file.replace('{date}', current_date)
+        elif '{time}' in self.csv_file:
+            full_csv_file_name = self.csv_file.replace('{time}', current_time)
         else:
             full_csv_file_name = self.csv_file
+
+        dir_name = os.path.dirname(full_csv_file_name)
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+            print(f"目录 {dir_name} 已创建。")
 
         print("正在保存数据到CSV文件...")
         with open(full_csv_file_name, 'w', newline='', encoding='utf-8') as csvfile:
@@ -287,6 +294,7 @@ class UniversitySpider:
         print(f'即将开始数据爬取，当前需要爬取的总页数是{self.end_of_page}页，保存至mysql的设置为{self.will_save_to_mysql}，保存至csv的设置为{self.will_save_to_csv}')
 
         for start in range(1, self.end_of_page + 1):
+        #for start in range(1, 6):        #仅供测试使用
             url_count = ((start)-1)*20
             url = self.base_url.format(start=url_count)
             html_content = self.fetch_url(url, cookie)
@@ -314,7 +322,6 @@ class UniversitySpider:
             self.save_to_mysql(MySQLHandler,all_data)
         else:
             print("未启用保存到MySQL数据库功能")
-
 
 if __name__ == "__main__":
     Spider = UniversitySpider()

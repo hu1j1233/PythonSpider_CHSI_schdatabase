@@ -4,10 +4,11 @@ from lxml import etree
 import csv
 import undetected_chromedriver as uc
 #from selenium.webdriver.chrome.options import Options
-from undetected_chromedriver.options import ChromeOptions
+from undetected_chromedriver.options import ChromeOptions #由于学信网反爬虫设置原因，需要使用反反爬虫的浏览器模拟库
 import time
 from requests.cookies import RequestsCookieJar
 import pymysql
+import json
 
 """
 学信网院校数据爬虫
@@ -92,31 +93,40 @@ class MySQLHandler:
             cursor.executemany(insert_query, all_data)
         self.connection.commit()
 
-class UniversityCrawler:
+class UniversitySpider:
     """
     大学信息爬虫类，用于从指定网站爬取大学信息并保存到CSV文件或MySQL数据库。
     """
     def __init__(self):
-        """
-        初始化爬虫类的属性，如请求头、CSV文件名、基础URL、mysql数据库连接信息等。
-        """
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'}
-        self.csv_file = 'universities_data.csv'
-        self.base_url = "https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-{start}.dhtml"
-        self.get_cookies_sleep_time = 3                         # 获取cookies的等待时间
-        self.get_web_sleep_time = 5                             # 获取网页的等待时间
-        self.cookie_renewal_interval = 5                        # cookies更新间隔
-        self.mysql_host = 'localhost'                           # mysql数据库主机地址
-        self.mysql_user = 'root'                                # mysql数据库用户名
-        self.mysql_password = '123456'                          # mysql数据库密码
-        self.mysql_database = 'university_data'                 # mysql数据库名称
-        self.end_of_page = 145                                  # 结束页码
-        self.auto_get_end_of_page = False                       # 是否自动获取结束页码    #未实现
-        self.will_save_to_mysql = False                         # 是否保存到mysql       #未实现
-        self.will_save_to_csv = False                           # 是否保存到CSV文件      #未实现
+        pass
 
+    def get_config(self, config_file='config.json'):
+        """
+        从配置文件中读取配置信息。
+        """
+        try:
+            with open(config_file, 'r') as file:
+                    config = json.load(file)
+        except FileNotFoundError:
+                print(f"配置文件{config_file}未找到，请确保文件存在。")
+                return
+        except json.JSONDecodeError:
+                print(f"配置文件{config_file}格式错误，请检查JSON格式是否正确。")
+                return
+        self.headers = config.get('headers')
+        self.csv_file = config.get('csv_file')
+        self.get_cookies_sleep_time = config.get('get_cookies_sleep_time')
+        self.get_web_sleep_time = config.get('get_web_sleep_time')
+        self.cookie_renewal_interval = config.get('cookie_renewal_interval')
+        self.mysql_host = config.get('mysql_host')
+        self.mysql_user = config.get('mysql_user')
+        self.mysql_password = config.get('mysql_password')
+        self.mysql_database = config.get('mysql_database')
+        self.end_of_page = config.get('end_of_page')
+        self.auto_get_end_of_page = config.get('auto_get_end_of_page')
+        self.will_save_to_mysql = config.get('will_save_to_mysql')
+        self.will_save_to_csv = config.get('will_save_to_csv')
+        self.base_url = ('https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-{start}.dhtml')
     def get_cookies_from_url(self,url):
         """
         使用浏览器获取网站cookies。
@@ -202,6 +212,7 @@ class UniversityCrawler:
         参数:
         - all_data: 包含所有大学信息的列表。
         """
+        print("正在保存数据到CSV文件...")
         with open(self.csv_file, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["院校名称","院校代码", "所在地区", "院校主管部门", "院校层次", "院校满意度"])
@@ -216,17 +227,20 @@ class UniversityCrawler:
         - MySQLHandle: MySQLHandler实例，用于数据库操作。
         - all_data: 包含所有大学信息的列表。
         """
+        print("正在保存数据到MySQL数据库...")
         mysql_handler = MySQLHandler(self.mysql_host,self.mysql_user,self.mysql_password,self.mysql_database)
         mysql_handler.connect()
         mysql_handler.create_table()
         mysql_handler.insert_data(all_data)
         mysql_handler.disconnect()
+        print(f"数据已保存至MySQL数据库 {self.mysql_database}")
 
     def run(self):
         """
         爬虫的主运行方法，负责爬取数据并保存。
         """
         all_data = []
+        self.get_config()
         cookie_renewal_interval = self.cookie_renewal_interval
         page_count = 0
         cookie = self.get_cookies_from_url('https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-0.dhtml')
@@ -249,10 +263,17 @@ class UniversityCrawler:
 
             time.sleep(self.get_web_sleep_time)
 
-        self.save_to_csv(all_data)
-        #self.save_to_mysql(all_data)#未启用
+        if self.will_save_to_csv == True:
+            self.save_to_csv(all_data)
+        else:
+            print("未启用保存到CSV文件功能")
+
+        if self.will_save_to_mysql == True:
+            self.save_to_mysql(MySQLHandler,all_data)
+        else:
+            print("未启用保存到MySQL数据库功能")
 
 
 if __name__ == "__main__":
-    crawler = UniversityCrawler()
-    crawler.run()
+    Spider = UniversitySpider()
+    Spider.run()

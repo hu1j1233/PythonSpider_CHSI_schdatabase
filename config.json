@@ -1,0 +1,18 @@
+{
+    "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+    },
+    "csv_file": "universities_data.csv",
+    "get_cookies_sleep_time": 3,
+    "get_web_sleep_time": 5,
+    "cookie_renewal_interval": 5,
+    "mysql_host": "localhost",
+    "mysql_user": "root",
+    "mysql_password": "123456",
+    "mysql_database": "university_data",
+    "end_of_page": 145,
+    "auto_get_end_of_page": false,
+    "will_save_to_mysql": false,
+    "will_save_to_csv": true
+}

@@ -127,7 +127,7 @@ class UniversitySpider:
         self.will_save_to_csv = config.get('will_save_to_csv')
         self.base_url = ('https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-{start}.dhtml')
 
-    def get_cookies_from_url(self,url):
+    def get_cookies_and_page_from_url(self,url):
         """
         使用浏览器获取网站cookies。
         参数:
@@ -245,7 +245,7 @@ class UniversitySpider:
         all_data = []
         cookie_renewal_interval = self.cookie_renewal_interval
         page_count = 0
-        cookie, end_of_page = self.get_cookies_from_url('https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-0.dhtml')
+        cookie, end_of_page = self.get_cookies_and_page_from_url('https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-0.dhtml')
         self.end_of_page = int(end_of_page)
         print(f'即将开始数据爬取，当前需要爬取的总页数是{self.end_of_page}页，保存至mysql的设置为{self.will_save_to_mysql}，保存至csv的设置为{self.will_save_to_csv}')
 

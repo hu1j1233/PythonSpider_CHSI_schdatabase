@@ -5,6 +5,7 @@ import csv
 import undetected_chromedriver as uc
 #from selenium.webdriver.chrome.options import Options
 from undetected_chromedriver.options import ChromeOptions #由于学信网反爬虫设置原因，需要使用反反爬虫的浏览器模拟库
+from undetected_chromedriver import By
 import time
 from requests.cookies import RequestsCookieJar
 import pymysql
@@ -122,8 +123,6 @@ class UniversitySpider:
         self.mysql_user = config.get('mysql_user')
         self.mysql_password = config.get('mysql_password')
         self.mysql_database = config.get('mysql_database')
-        self.end_of_page = config.get('end_of_page')
-        self.auto_get_end_of_page = config.get('auto_get_end_of_page')
         self.will_save_to_mysql = config.get('will_save_to_mysql')
         self.will_save_to_csv = config.get('will_save_to_csv')
         self.base_url = ('https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-{start}.dhtml')
@@ -143,12 +142,15 @@ class UniversitySpider:
             driver.get(url)
             time.sleep(self.get_cookies_sleep_time)
 
+            page = driver.find_element(By.XPATH, '//*[@id="PageForm"]/ul/li[8]/a')
+            page_info = page.text
+
             selenium_cookies = driver.get_cookies()
             cookie_jar = RequestsCookieJar()
             for cookie in selenium_cookies:
                 cookie_jar.set(cookie['name'], cookie['value'])
 
-            return cookie_jar
+            return cookie_jar, page_info
         finally:
             driver.quit()
 
@@ -243,9 +245,11 @@ class UniversitySpider:
         all_data = []
         cookie_renewal_interval = self.cookie_renewal_interval
         page_count = 0
-        cookie = self.get_cookies_from_url('https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-0.dhtml')
+        cookie, end_of_page = self.get_cookies_from_url('https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-0.dhtml')
+        self.end_of_page = int(end_of_page)
+        print(f'即将开始数据爬取，当前需要爬取的总页数是{self.end_of_page}页，保存至mysql的设置为{self.will_save_to_mysql}，保存至csv的设置为{self.will_save_to_csv}')
 
-        for start in range(1, (self.end_of_page) +1 ):
+        for start in range(1, self.end_of_page + 1):
             url = self.base_url.format(start=start)
             html_content = self.fetch_url(url, cookie)
             if html_content:

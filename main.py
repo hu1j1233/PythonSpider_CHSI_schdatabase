@@ -127,6 +127,7 @@ class UniversitySpider:
         self.will_save_to_mysql = config.get('will_save_to_mysql')
         self.will_save_to_csv = config.get('will_save_to_csv')
         self.base_url = ('https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-{start}.dhtml')
+
     def get_cookies_from_url(self,url):
         """
         使用浏览器获取网站cookies。
@@ -150,6 +151,7 @@ class UniversitySpider:
             return cookie_jar
         finally:
             driver.quit()
+
     def fetch_url(self, url, cookies):
         """
         发送GET请求到指定URL，并返回响应的HTML内容。

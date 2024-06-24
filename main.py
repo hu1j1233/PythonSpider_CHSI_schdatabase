@@ -68,10 +68,10 @@ class MySQLHandler:
             create_table_query = '''  
             CREATE TABLE IF NOT EXISTS schools (  
                 id INT AUTO_INCREMENT PRIMARY KEY,  
-                school_name VARCHAR(255) NOT NULL,  
-                school_code VARCHAR(50),  
+                name VARCHAR(255) NOT NULL,  
+                schid VARCHAR(50),  
                 region VARCHAR(255),  
-                department VARCHAR(255),  
+                authority VARCHAR(255),  
                 level VARCHAR(50),  
                 rate FLOAT  
             )  
@@ -88,7 +88,7 @@ class MySQLHandler:
         """
         with self.connection.cursor() as cursor:
             insert_query = '''  
-            INSERT INTO schools (school_name, school_code, region, department, level, rate)  
+            INSERT INTO schools (name, schid, region, authority, level, rate)  
             VALUES (%s, %s, %s, %s, %s, %s)  
             '''
             cursor.executemany(insert_query, all_data)
@@ -180,7 +180,7 @@ class UniversitySpider:
         finally:
             driver.quit()
 
-    def fetch_url(self, url, cookies):
+    def get_url(self, url, cookies):
         """
         发送GET请求到指定URL，并返回响应的HTML内容。
 
@@ -295,9 +295,9 @@ class UniversitySpider:
 
         for start in range(1, self.end_of_page + 1):
         #for start in range(1, 6):        #仅供测试使用
-            url_count = ((start)-1)*20
+            url_count = (start - 1) * 20
             url = self.base_url.format(start=url_count)
-            html_content = self.fetch_url(url, cookie)
+            html_content = self.get_url(url, cookie)
             if html_content:
                 page_data = self.parse_university_info(html_content)
                 all_data.extend(page_data)
@@ -319,7 +319,7 @@ class UniversitySpider:
             print("未启用保存到CSV文件功能")
 
         if self.will_save_to_mysql == True:
-            self.save_to_mysql(MySQLHandler,all_data)
+            self.save_to_mysql(all_data)
         else:
             print("未启用保存到MySQL数据库功能")
 

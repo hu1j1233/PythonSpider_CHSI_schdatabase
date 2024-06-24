@@ -12,5 +12,5 @@
     "mysql_password": "123456",
     "mysql_database": "university_data",
     "will_save_to_mysql": false,
-    "will_save_to_csv": true
+    "will_save_to_csv": false
 }
